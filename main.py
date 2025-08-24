@@ -20,6 +20,7 @@ class UsernameCheckerApp:
         self.total_checked = 0
         self.total_found = 0
         self.start_time = None
+        self.current_category = "4char"  # Категория по умолчанию
         
         self.setup_ui()
         
@@ -40,9 +41,26 @@ class UsernameCheckerApp:
         self.setup_results_tab()
         
     def setup_main_tab(self):
-        # Верхняя панель с кнопками
-        button_frame = ttk.Frame(self.main_frame)
-        button_frame.pack(fill='x', padx=10, pady=10)
+        # Верхняя панель с кнопками и выбором категории
+        control_frame = ttk.Frame(self.main_frame)
+        control_frame.pack(fill='x', padx=10, pady=10)
+        
+        # Выбор категории
+        category_frame = ttk.LabelFrame(control_frame, text="Выбор категории")
+        category_frame.pack(side='left', fill='y', padx=5)
+        
+        self.category_var = tk.StringVar(value="4char")
+        
+        ttk.Radiobutton(category_frame, text="4-символьные", variable=self.category_var, 
+                       value="4char", command=self.update_category).pack(anchor='w')
+        ttk.Radiobutton(category_frame, text="5-символьные", variable=self.category_var, 
+                       value="5char", command=self.update_category).pack(anchor='w')
+        ttk.Radiobutton(category_frame, text="Английские слова", variable=self.category_var, 
+                       value="english", command=self.update_category).pack(anchor='w')
+        
+        # Кнопки управления
+        button_frame = ttk.Frame(control_frame)
+        button_frame.pack(side='right', fill='y', padx=5)
         
         self.start_button = ttk.Button(button_frame, text="▶️ Старт", command=self.start_checking)
         self.start_button.pack(side='left', padx=5)
@@ -50,12 +68,11 @@ class UsernameCheckerApp:
         self.stop_button = ttk.Button(button_frame, text="⏹️ Стоп", command=self.stop_checking, state='disabled')
         self.stop_button.pack(side='left', padx=5)
         
-        self.save_button = ttk.Button(button_frame, text="💾 Сохранить результаты", command=self.save_results)
-        self.save_button.pack(side='right', padx=5)
+        self.save_button = ttk.Button(button_frame, text="💾 Сохранить", command=self.save_results)
+        self.save_button.pack(side='left', padx=5)
         
-        # Кнопка обновления результатов
-        self.refresh_button = ttk.Button(button_frame, text="🔄 Обновить результаты", command=self.update_results_tab)
-        self.refresh_button.pack(side='right', padx=5)
+        self.refresh_button = ttk.Button(button_frame, text="🔄 Обновить", command=self.update_results_tab)
+        self.refresh_button.pack(side='left', padx=5)
         
         # Статистика
         stats_frame = ttk.LabelFrame(self.main_frame, text="Статистика")
@@ -102,6 +119,20 @@ class UsernameCheckerApp:
         self.results_tree.pack(side='left', fill='both', expand=True)
         scrollbar.pack(side='right', fill='y')
         
+    def update_category(self):
+        """Обновляет выбранную категорию"""
+        self.current_category = self.category_var.get()
+        self.log_message(f"📁 Выбрана категория: {self.get_category_name()}")
+        
+    def get_category_name(self):
+        """Возвращает название категории"""
+        categories = {
+            "4char": "4-символьные",
+            "5char": "5-символьные", 
+            "english": "Английские слова"
+        }
+        return categories.get(self.current_category, "4-символьные")
+        
     def log_message(self, message):
         """Добавляет сообщение в лог"""
         self.log_text.config(state='normal')
@@ -118,7 +149,9 @@ class UsernameCheckerApp:
             stats_text = (f"📊 Проверено: {self.total_checked} | "
                          f"🎯 Найдено: {self.total_found} | "
                          f"🚀 Скорость: {speed:.0f}/мин | "
-                         f"⏱️ Время: {elapsed:.0f} сек")
+                         f"⏱️ Время: {elapsed:.0f} сек | "
+                         f"📁 Категория: {self.get_category_name()} | "
+                         f"🎲 Уникальных: {len(self.generator.used_usernames)}")
             self.stats_label.config(text=stats_text)
         
     def update_results_tab(self):
@@ -152,6 +185,7 @@ class UsernameCheckerApp:
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write("🎯 ДОСТУПНЫЕ ЮЗЕРНЕЙМЫ НА FRAGMENT.COM\n")
                 f.write("=" * 60 + "\n\n")
+                f.write(f"Категория: {self.get_category_name()}\n")
                 f.write(f"Всего проверено: {self.total_checked} юзернеймов\n")
                 f.write(f"Найдено доступных: {len(self.available_usernames)}\n")
                 f.write(f"Время начала: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -182,6 +216,7 @@ class UsernameCheckerApp:
             self.stop_button.config(state='normal')
             
             self.log_message("🚀 Запуск проверки...")
+            self.log_message(f"📁 Категория: {self.get_category_name()}")
             self.log_message("⏹️ Для остановки нажмите кнопку 'Стоп'")
             self.log_message("=" * 50)
             
@@ -204,9 +239,10 @@ class UsernameCheckerApp:
             
     def check_batch(self):
         """Проверка одного батча юзернеймов"""
-        usernames = self.generator.generate_batch(30)
+        usernames = self.generator.generate_batch(40, self.current_category)
         self.log_message(f"🎲 Сгенерировано: {len(usernames)} юзернеймов")
-        self.log_message(f"📋 Примеры: {', '.join(usernames[:3])}...")
+        if usernames:
+            self.log_message(f"📋 Примеры: {', '.join(usernames[:3])}...")
         
         results = self.parser.check_usernames_batch(usernames)
         
@@ -231,8 +267,8 @@ class UsernameCheckerApp:
             for user in available:
                 self.log_message(f"      🔹 {user['username']} - {user['status']} ({user['response_time']}s)")
             
-            # Только логируем, но НЕ переключаем вкладку
-            self.log_message("   💡 Перейдите на вкладку 'Доступные юзернеймы' чтобы увидеть результаты")
+            # Обновляем таблицу результатов
+            self.update_results_tab()
         
         return len(available)
     
@@ -250,6 +286,11 @@ class UsernameCheckerApp:
                 
                 # Обновляем статистику в UI
                 self.root.after(0, self.update_stats)
+                
+                # Очищаем историю каждые 10 батчей чтобы не засорять память
+                if batch_count % 10 == 0:
+                    self.generator.clear_used_usernames()
+                    self.log_message("🧹 История юзернеймов очищена")
                 
                 # Короткая пауза между батчами
                 time.sleep(2)

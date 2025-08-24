@@ -1,99 +1,118 @@
 import random
-from typing import List
+import string
+from typing import List, Set
 
 class UsernameGenerator:
     def __init__(self):
-        # Словари для генерации (только 4+ символов)
-        self.short_words = [
-            'apex', 'nova', 'zeno', 'flux', 'core', 'vibe', 'neon', 'luxe', 'maxx', 'prime',
-            'echo', 'bolt', 'blaze', 'frost', 'storm', 'shadow', 'phantom', 'ghost', 'stealth',
-            'quant', 'cosmic', 'orbit', 'pulse', 'spark', 'flare', 'glitch', 'cyber', 'digital',
-            'alpha', 'omega', 'sigma', 'delta', 'gamma', 'nexus', 'vertex', 'matrix', 'proton',
-            'photon', 'electron', 'vortex', 'infinity', 'eternity', 'velocity', 'momentum'
-        ]
+        self.used_usernames: Set[str] = set()
         
-        self.medium_words = [
-            'quantum', 'cosmic', 'atomic', 'crystal', 'diamond', 'silver', 'golden',
-            'platinum', 'premium', 'elite', 'expert', 'master', 'legend', 'mythic',
-            'epic', 'rare', 'unique', 'special', 'supreme', 'digital', 'virtual'
+        # Популярные английские слова
+        self.popular_words = [
+            'time', 'space', 'code', 'data', 'tech', 'byte', 'bit', 'net', 'web',
+            'cloud', 'game', 'play', 'fun', 'cool', 'nice', 'good', 'best', 'fast',
+            'quick', 'smart', 'clever', 'wise', 'bold', 'brave', 'calm', 'dark',
+            'light', 'fire', 'water', 'earth', 'air', 'wind', 'wave', 'star',
+            'moon', 'sun', 'love', 'life', 'live', 'free', 'true', 'real', 'pure',
+            'nova', 'zen', 'flux', 'core', 'vibe', 'neo', 'lux', 'max', 'prime',
+            'echo', 'bolt', 'blaze', 'frost', 'storm', 'shadow', 'ghost', 'pulse',
+            'spark', 'flare', 'glitch', 'cyber', 'digital', 'alpha', 'omega'
         ]
         
         self.prefixes = ['super', 'mega', 'ultra', 'hyper', 'neo', 'pro', 'alpha', 'omega']
         self.suffixes = ['tech', 'net', 'hub', 'lab', 'zone', 'world', 'space', 'time']
 
-    def generate_short_usernames(self, count: int = 20) -> List[str]:
-        """Генерация 4-5 символьных юзернеймов"""
-        usernames = set()
+    def generate_4char_usernames(self, count: int) -> List[str]:
+        """Генерация 4-символьных юзернеймов"""
+        usernames = []
+        attempts = 0
         
-        # Только слова из 4-5 символов
-        valid_words = [w for w in self.short_words if 4 <= len(w) <= 5]
-        
-        for _ in range(count):
-            if valid_words and random.random() < 0.7:
-                username = random.choice(valid_words)
+        while len(usernames) < count and attempts < 1000:
+            # 1. Случайные буквы
+            if random.random() < 0.6:
+                username = ''.join(random.choices(string.ascii_lowercase, k=4))
+            # 2. Короткие слова
             else:
-                # Генерация 4-5 буквенных комбинаций
-                length = random.choice([4, 5])
-                username = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=length))
+                short_words = [w for w in self.popular_words if len(w) == 4]
+                if short_words:
+                    username = random.choice(short_words)
+                else:
+                    username = ''.join(random.choices(string.ascii_lowercase, k=4))
             
-            usernames.add(username)
-        
-        return list(usernames)[:count]
-
-    def generate_english_usernames(self, count: int = 20) -> List[str]:
-        """Генерация английских слов юзернеймов (4+ символов)"""
-        usernames = set()
-        
-        # Только слова от 4 символов
-        short_valid = [w for w in self.short_words if len(w) >= 4]
-        medium_valid = [w for w in self.medium_words if len(w) >= 4]
-        
-        for _ in range(count):
-            if random.random() < 0.6 and short_valid:
-                username = random.choice(short_valid)
-            elif medium_valid:
-                username = random.choice(medium_valid)
-            else:
-                # Запасной вариант
-                length = random.randint(4, 6)
-                username = ''.join(random.choices('abcdefghijklmnopqrstuvwxyz', k=length))
+            if username not in self.used_usernames:
+                self.used_usernames.add(username)
+                usernames.append(username)
             
-            if len(username) >= 4:
-                usernames.add(username)
+            attempts += 1
         
-        return list(usernames)[:count]
+        return usernames
 
-    def generate_combined_usernames(self, count: int = 20) -> List[str]:
-        """Генерация комбинированных юзернеймов (6+ символов)"""
-        usernames = set()
+    def generate_5char_usernames(self, count: int) -> List[str]:
+        """Генерация 5-символьных юзернеймов"""
+        usernames = []
+        attempts = 0
         
-        for _ in range(count):
+        while len(usernames) < count and attempts < 1000:
+            # 1. Случайные буквы
             if random.random() < 0.5:
-                # Префикс + слово
-                prefix = random.choice(self.prefixes)
-                word = random.choice([w for w in self.short_words if len(w) >= 3])
-                username = prefix + word
+                username = ''.join(random.choices(string.ascii_lowercase, k=5))
+            # 2. Короткие слова
+            elif random.random() < 0.7:
+                short_words = [w for w in self.popular_words if len(w) == 5]
+                if short_words:
+                    username = random.choice(short_words)
+                else:
+                    username = ''.join(random.choices(string.ascii_lowercase, k=5))
+            # 3. Префикс + буква
             else:
-                # Слово + суффикс
-                word = random.choice([w for w in self.short_words if len(w) >= 3])
-                suffix = random.choice(self.suffixes)
-                username = word + suffix
+                prefix = random.choice(self.prefixes)
+                if len(prefix) == 4:
+                    username = prefix + random.choice(string.ascii_lowercase)
+                else:
+                    username = ''.join(random.choices(string.ascii_lowercase, k=5))
             
-            # Ограничиваем длину 4-8 символами
-            if 8 <= len(username) <= 12:
-                usernames.add(username)
+            if username not in self.used_usernames:
+                self.used_usernames.add(username)
+                usernames.append(username)
+            
+            attempts += 1
         
-        return list(usernames)[:count]
+        return usernames
 
-    def generate_batch(self, count: int = 50) -> List[str]:
-        """Генерация батча юзернеймов"""
-        short = self.generate_short_usernames(count // 3)
-        english = self.generate_english_usernames(count // 3)
-        combined = self.generate_combined_usernames(count // 3)
+    def generate_english_words(self, count: int) -> List[str]:
+        """Генерация английских слов"""
+        usernames = []
+        attempts = 0
         
-        # Фильтруем только 4+ символьные
-        all_usernames = [u for u in short + english + combined if len(u) >= 4]
-        all_usernames = list(set(all_usernames))
-        random.shuffle(all_usernames)
+        while len(usernames) < count and attempts < 1000:
+            # Берем популярные слова разной длины
+            word = random.choice(self.popular_words)
+            
+            if word not in self.used_usernames and 4 <= len(word) <= 8:
+                self.used_usernames.add(word)
+                usernames.append(word)
+            
+            attempts += 1
         
-        return all_usernames[:count]
+        return usernames
+
+    def generate_batch(self, count: int, category: str = "4char") -> List[str]:
+        """Генерация батча юзернеймов по категории"""
+        if category == "4char":
+            usernames = self.generate_4char_usernames(count)
+        elif category == "5char":
+            usernames = self.generate_5char_usernames(count)
+        elif category == "english":
+            usernames = self.generate_english_words(count)
+        else:
+            usernames = self.generate_4char_usernames(count)
+        
+        print(f"🎲 Сгенерировано {len(usernames)} юзернеймов (категория: {category})")
+        if usernames:
+            print(f"📋 Примеры: {', '.join(usernames[:3])}...")
+        
+        return usernames
+
+    def clear_used_usernames(self):
+        """Очистка истории использованных юзернеймов"""
+        self.used_usernames.clear()
+        print("🧹 История юзернеймов очищена")
